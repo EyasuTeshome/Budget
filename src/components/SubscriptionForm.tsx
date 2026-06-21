@@ -25,7 +25,8 @@ export default function SubscriptionForm({
   const [name, setName] = useState(initial?.name ?? '');
   const [amount, setAmount] = useState(initial ? String(initial.amount) : '');
   const [categoryId, setCategoryId] = useState<number | undefined>(initial?.categoryId);
-  const [accountId, setAccountId] = useState<number | undefined>(initial?.accountId ?? accounts[0]?.id);
+  const [accountId, setAccountId] = useState<number | undefined>(initial?.accountId);
+  const effectiveAccountId = accountId ?? accounts[0]?.id;
   const [frequency, setFrequency] = useState<Frequency>(initial?.frequency ?? 'monthly');
   const [intervalDays, setIntervalDays] = useState(initial?.intervalDays ? String(initial.intervalDays) : '30');
   const [nextBillingDate, setNextBillingDate] = useState(initial?.nextBillingDate ?? todayISO());
@@ -35,12 +36,12 @@ export default function SubscriptionForm({
 
   async function handleSubmit() {
     const amt = parseFloat(amount);
-    if (!name.trim() || Number.isNaN(amt) || amt <= 0 || !categoryId || !accountId) return;
+    if (!name.trim() || Number.isNaN(amt) || amt <= 0 || !categoryId || !effectiveAccountId) return;
     const payload: Omit<Subscription, 'id'> = {
       name,
       amount: amt,
       categoryId,
-      accountId,
+      accountId: effectiveAccountId,
       frequency,
       intervalDays: frequency === 'custom' ? parseInt(intervalDays, 10) || 30 : undefined,
       nextBillingDate,
@@ -82,7 +83,7 @@ export default function SubscriptionForm({
         </select>
       </Field>
       <Field label="Account">
-        <select className={inputClass} value={accountId ?? ''} onChange={(e) => setAccountId(Number(e.target.value))}>
+        <select className={inputClass} value={effectiveAccountId ?? ''} onChange={(e) => setAccountId(Number(e.target.value))}>
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}

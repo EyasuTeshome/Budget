@@ -21,19 +21,20 @@ export default function TransactionForm({ initial, onDone }: Props) {
   const [amount, setAmount] = useState(initial ? String(initial.amount) : '');
   const [date, setDate] = useState(initial?.date ?? todayISO());
   const [categoryId, setCategoryId] = useState<number | undefined>(initial?.categoryId);
-  const [accountId, setAccountId] = useState<number | undefined>(initial?.accountId ?? accounts[0]?.id);
+  const [accountId, setAccountId] = useState<number | undefined>(initial?.accountId);
+  const effectiveAccountId = accountId ?? accounts[0]?.id;
   const [note, setNote] = useState(initial?.note ?? '');
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
   async function handleSubmit() {
     const amt = parseFloat(amount);
-    if (Number.isNaN(amt) || amt <= 0 || !categoryId || !accountId) return;
+    if (Number.isNaN(amt) || amt <= 0 || !categoryId || !effectiveAccountId) return;
 
     if (initial?.id) {
-      await db.transactions.update(initial.id, { type, amount: amt, date, categoryId, accountId, note });
+      await db.transactions.update(initial.id, { type, amount: amt, date, categoryId, accountId: effectiveAccountId, note });
     } else {
-      await db.transactions.add({ type, amount: amt, date, categoryId, accountId, note });
+      await db.transactions.add({ type, amount: amt, date, categoryId, accountId: effectiveAccountId, note });
     }
     onDone();
   }
@@ -102,7 +103,7 @@ export default function TransactionForm({ initial, onDone }: Props) {
       <Field label="Account">
         <select
           className={inputClass}
-          value={accountId ?? ''}
+          value={effectiveAccountId ?? ''}
           onChange={(e) => setAccountId(Number(e.target.value))}
         >
           {accounts.map((a) => (
